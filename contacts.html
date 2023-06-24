@@ -1,0 +1,58 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="main.css" />
+  </head>
+  <body>
+    <div class="section">
+      <div class="section-center">
+        <button class="btn contacts-btn">get contacts</button>
+        <table class="set-contacts"></table>
+      </div>
+    </div>
+  </body>
+  <script>
+    const props = ['name', 'email', 'tel'];
+    const opts = { multiple: true };
+
+    async function getContacts() {
+      try {
+        const contacts = await navigator.contacts.select(props, opts);
+        const setContacts = document.querySelector('.set-contacts');
+        // console.log(contacts);
+        setContacts.innerHTML = contacts
+          .map(({ address, email, icon, name, tel }) => {
+            return `<tr>
+            <th>Address</th>
+            <td>${address}</td>
+          </tr>
+          <tr>
+            <th>Name</th>
+            <td>${name}</td>
+          </tr>
+          <tr>
+            <th>Tell</th>
+            <td>${tel}</td>
+          </tr>
+          `;
+          })
+          .join('');
+      } catch (ex) {
+        // Handle any errors here.
+      }
+    }
+
+    const contactsBtn = document.querySelector('.contacts-btn');
+
+    contactsBtn.addEventListener('click', async () => {
+      if ('contacts' in navigator) {
+        await getContacts();
+      } else {
+        alert('Contacts permission not supported');
+      }
+    });
+  </script>
+</html>

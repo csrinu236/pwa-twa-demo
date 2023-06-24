@@ -1,0 +1,146 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="main.css" />
+  </head>
+  <body>
+    <div class="section">
+      <div class="section-center">
+        <button class="btn select-btn mb-1">select file</button>
+        <hr />
+        <br />
+        <button class="btn save-btn">save</button>
+        <button class="btn saveas-btn">save as new file</button>
+
+        <textarea name="textarea" id="textarea" rows="10"></textarea>
+        <p>
+          Native apps typically have more extensive access to the file storage
+          system compared to Progressive Web Apps (PWAs) due to the fundamental
+          differences in their underlying architectures and security models.
+        </p>
+        <p>
+          Native apps are installed directly on the user's device and have
+          direct access to the device's file system. This level of access allows
+          them to read, write, and manipulate files throughout the file storage
+          system, subject to the permissions granted by the user during
+          installation or at runtime.
+        </p>
+        <p>
+          On the other hand, PWAs run within the browser sandbox and are subject
+          to stricter security restrictions. The web platform imposes these
+          restrictions to protect user privacy and ensure the security of the
+          user's device and data. Direct access to the file system from a web
+          application can present significant security risks if not properly
+          managed.
+        </p>
+        <p>
+          To strike a balance between security and functionality,
+          <b>
+            web browsers provide limited file system access capabilities for
+            PWAs
+          </b>
+          through APIs such as the File System Access API and the Native File
+          System API. These APIs allow usersto selectively grant access to
+          specific files or directories, preventing unrestricted access to the
+          entire file storage system.
+        </p>
+        <p>
+          It's worth noting that the web platform is continually evolving, and
+          there may be advancements and expansions in the file system access
+          capabilities of PWAs in the future. However, security and privacy
+          considerations will always be essential factors in determining the
+          level of access granted to web applications.
+        </p>
+      </div>
+    </div>
+  </body>
+
+  <script>
+    const selectBtn = document.querySelector('.select-btn');
+    const textArea = document.querySelector('#textarea');
+    const saveBtn = document.querySelector('.save-btn');
+    const saveAsBtn = document.querySelector('.saveas-btn');
+    let handle;
+    // selectBtn.addEventListener('click', async () => {
+    //   //   Have the user select a file.
+    //   [handle] = await window.showOpenFilePicker();
+    //   // Get the File object from the handle.
+
+    //   const file = await handle.getFile();
+    //   console.log(file);
+    //   //   This file extends to blob interface so all blob methods like
+    //   //   slice(), stream(), arrayBuffer(), text() are available depending on file type
+    //   const content = await file.text();
+    //   textArea.value = contents;
+
+    //   // Create a FileSystemWritableFileStream to write to.
+    //   const writable = await handle.createWritable();
+    //   // Write the contents of the file to the stream.
+    //   await writable.write(textArea.value);
+    //   // Close the file and write the contents to disk.
+    //   await writable.close(); // saving to same file
+
+    //   // if you want to save to a new file
+    //   // handle = await window.showSaveFilePicker();
+    //   // save()
+    // });
+
+    selectBtn?.addEventListener('click', async () => {
+      // Have the user select a file.
+      [handle] = await window.showOpenFilePicker({
+        types: [
+          {
+            description: 'JS Files',
+            accept: {
+              'text/javascript': ['.js'],
+            },
+          },
+        ],
+      });
+
+      console.log(handle);
+      const file = await handle.getFile();
+      const content = await file.text();
+      console.log(content);
+      textArea.value = content;
+
+      saveBtn.onclick = async () => {
+        // Create a FileSystemWritableFileStream to write to.
+        const writable = await handle.createWritable();
+        // Write the contents of the file to the stream.
+        await writable.write(textArea.value);
+        // Close the file and write the contents to disk.
+        await writable.close(); // saving to same file
+        alert('saved successfully');
+      };
+
+      saveAsBtn.onclick = async () => {
+        handle = await window.showSaveFilePicker();
+        save();
+      };
+
+      // const [handle] = await window.showOpenFilePicker({
+      //   types: [
+      //     {
+      //       description: 'Video Files',
+      //       accept: { 'video/*': ['.mp4', '.webm', '.ogg'] },
+      //     },
+      //   ],
+      // });
+
+      // const file = await handle.getFile();
+      // const url = URL.createObjectURL(file);
+
+      // const videoElement = document.createElement('video');
+      // videoElement.src = url;
+      // videoElement.style.width = '100%';
+      // videoElement.controls = true;
+      // videoElement.autoplay = true;
+
+      // document.body.appendChild(videoElement);
+    });
+  </script>
+</html>

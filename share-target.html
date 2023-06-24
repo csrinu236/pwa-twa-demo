@@ -1,0 +1,73 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="main.css" />
+    <link rel="manifest" href="manifest.json" />
+  </head>
+  <body>
+    <div class="section">
+      <div class="section-center">
+        <p>
+          In the past, only platform-specific apps could register with the
+          operating system to receive shares from other installed apps. But with
+          the Web Share Target API, installed web apps can register with the
+          underlying operating system as a share target to receive shared
+          content.
+        </p>
+        <h2>Shared HTML Page</h2>
+        <h3 class="title"></h3>
+        <h3 class="text"></h3>
+        <h3 class="url"></h3>
+      </div>
+    </div>
+  </body>
+</html>
+
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    const parsedUrl = new URL(window.location);
+    // searchParams.get() will properly handle decoding the values.
+    console.log('Title shared: ' + parsedUrl.searchParams.get('title'));
+    console.log('Text shared: ' + parsedUrl.searchParams.get('text'));
+    console.log('URL shared: ' + parsedUrl.searchParams.get('url'));
+    document.querySelector('.title').innerHTML =
+      parsedUrl.searchParams.get('title');
+    document.querySelector('.text').innerHTML =
+      parsedUrl.searchParams.get('text');
+    document.querySelector('.url').innerHTML =
+      parsedUrl.searchParams.get('url');
+  });
+
+  // self.addEventListener('fetch', (event) => {
+  //   // The URL constructor is a built-in JavaScript object that allows
+  //   // you to parse, manipulate, and access various components of a URL.
+  //   // It provides properties and methods to work with different parts
+  //   // of the URL, such as the protocol, hostname, path, query parameters,
+  //   // and more.
+  //   const url = new URL(event.request.url);
+  //   // If this is an incoming POST request for the
+  //   // registered "action" URL, respond to it.
+  //   if (
+  //     event.request.method === 'POST' &&
+  //     url.pathname === '/share-target.html'
+  //   ) {
+  //     event.respondWith(
+  //       (async () => {
+  //         const formData = await event.request.formData();
+  //         // The formData() method is used to asynchronously parse the body of
+  //         // the request as a FormData object. It allows you to access the form
+  //         // data sent in the POST request payload.
+  //         const link = formData.get('link') || '';
+  //         document.querySelector('.url').innerHTML = link;
+  //         // parsedUrl.searchParams.get('url');
+  //         // const responseUrl = await saveBookmark(link);
+  //         alert(link);
+  //         return Response.redirect(responseUrl, 303);
+  //       })()
+  //     );
+  //   }
+  // });
+</script>

@@ -1,0 +1,66 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Notifications</title>
+    <link rel="stylesheet" href="main.css" />
+  </head>
+  <body>
+    <div class="section">
+      <div class="section-center">
+        <input type="text" placeholder="Name" name="name" id="name" />
+        <input type="text" placeholder="Age" name="age" id="age" />
+        <input type="text" placeholder="Role" name="role" id="role" />
+        <br />
+        <br />
+        <button class="btn submit-btn">Submit</button>
+        <button class="btn random-btn">Random</button>
+      </div>
+    </div>
+
+    <script>
+      const name = document.querySelector('#name');
+      const age = document.querySelector('#age');
+      const role = document.querySelector('#role');
+      const submitBtn = document.querySelector('.submit-btn');
+      const randomBtn = document.querySelector('.random-btn');
+
+      randomBtn.addEventListener('click', () => {
+        name.value = 'Chenna Sreenu';
+        age.value = '23';
+        role.value = 'Web Developer';
+      });
+
+      submitBtn.addEventListener('click', async (e) => {
+        const [nameValue, ageValue, roleValue] = [
+          name.value,
+          age.value,
+          role.value,
+        ];
+        if (nameValue && ageValue && roleValue) {
+          const data = await fetch('/api/hello', {
+            method: 'POST',
+            body: JSON.stringify({
+              name: nameValue,
+              age: ageValue,
+              role: roleValue,
+            }),
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          })
+            .then((resp) => {
+              if (resp.ok) {
+                return resp.json();
+              }
+            })
+            .catch((err) => {
+              console.log(err);
+            });
+          console.log(data);
+        }
+      });
+    </script>
+  </body>
+</html>

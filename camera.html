@@ -1,0 +1,50 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Camera</title>
+    <link rel="stylesheet" href="main.css" />
+    <script defer src="camera.js"></script>
+  </head>
+  <body>
+    <div class="section">
+      <div class="section-center">
+        <h2>Camera Access in PWA</h2>
+        <h3>Type 1</h3>
+        <p>(input type file, capture camera)</p>
+        <label for="camera">Camera with input type</label>
+        <input type="file" id="camera" accept="image/*" capture="camera" />
+        <h3>Type 2</h3>
+        <p>
+          navigator.mediaDevices.getUserMedia({ audio: false, video: true, });
+        </p>
+        <div class="btn-container">
+          <button class="btn camera-btn">Open Camera</button>
+          <button class="btn capture-btn">Capture</button>
+
+          <button class="btn post-btn">Submit your Post</button>
+        </div>
+
+        <video autoplay id="player"></video>
+        <!-- <div class="blob-container">
+          <h3>High Clarity Image</h3>
+          <img class="blob-image" alt="blob-image" />
+        </div> -->
+        <!-- <div class="normal-container">
+          <h3>Normal Image Tag</h3>
+          <img class="normal-img" alt="normal-img" />
+        </div> -->
+        <div class="canvas-container">
+          <h3>Canvas Image</h3>
+          <a class="btn download-image" href="#">download</a>
+          <canvas id="canvas" width="320px" height="220px"></canvas>
+          <button class="btn location-btn">Get Location</button>
+          <h3>Location:</h3>
+          <h4 class="mb-0 city"></h4>
+          <h4 class="mb-0 country"></h4>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
