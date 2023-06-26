@@ -191,6 +191,7 @@ img {
   letter-spacing: var(--spacing);
   width: auto;
   display: inline-block;
+  margin-bottom: 1rem;
 }
 
 .btn:hover {

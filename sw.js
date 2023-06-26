@@ -298,14 +298,16 @@ self.addEventListener('fetch', (e) => {
   console.log('Request in Intercepted, Captain...!');
 
   const url = new URL(e.request.url);
-
-  // The URL constructor is a built-in JavaScript object that provides a convenient way to parse and manipulate URLs. By passing a URL string as a parameter to the URL constructor, you can create a URL object that exposes various properties and methods to access and modify different parts of the URL.
-  // Once you have created a URL object, you can use its properties and methods to retrieve information about the URL, such as the protocol, hostname, port, path, query parameters, and more. You can also modify these components if needed.
-
-  // console.log({ url, pathname: url.pathname });
-  // If this is an incoming POST request for the
-  // registered "action" URL, respond to it.
+  if (url.pathname === '/api/dbdata') {
+    return e.respondWith(fetch(e.request));
+  }
   if (e.request.method === 'POST' && url.pathname === '/share-target.html') {
+    // The URL constructor is a built-in JavaScript object that provides a convenient way to parse and manipulate URLs. By passing a URL string as a parameter to the URL constructor, you can create a URL object that exposes various properties and methods to access and modify different parts of the URL.
+    // Once you have created a URL object, you can use its properties and methods to retrieve information about the URL, such as the protocol, hostname, port, path, query parameters, and more. You can also modify these components if needed.
+
+    // console.log({ url, pathname: url.pathname });
+    // If this is an incoming POST request for the
+    // registered "action" URL, respond to it.
     e.respondWith(
       (async () => {
         const formData = await e.request.formData();
@@ -340,6 +342,7 @@ self.addEventListener('fetch', (e) => {
 
   if (urls.includes(e.request.url)) {
     // this case cache first & then network later
+    // Part2, fetch interceptor of Part 1(post.js)
     return e.respondWith(
       fetch(e.request).then((resp) => {
         const clonedResp = resp.clone();
@@ -487,13 +490,12 @@ self.addEventListener('notificationclose', (e) => {
 
 self.addEventListener('sync', (e) => {
   if (e.tag === 'sync-new-posts') {
-    console.log('[SYNCING NEW POST]');
+    console.log('[SYNC event CB into the action...]');
     e.waitUntil(
       readAllData('offline-posts').then((data) => {
         for (let i = 0; i < data.length; i++) {
-          // const url =
-          //   'https://pwa-practice-49ad4-default-rtdb.firebaseio.com/posts.json';
-          const url = 'http://localhost:3000/posts';
+          // const url = 'https://pwa-practice-49ad4-default-rtdb.firebaseio.com/posts.json';
+          const url = '/api/dbdata';
           fetch(url, {
             method: 'POST',
             headers: {
@@ -507,21 +509,27 @@ self.addEventListener('sync', (e) => {
             mode: 'no-cors',
           })
             .then((resp) => {
-              console.log(resp);
               // self.postMessage({ data: 'POST MESSAGE FROM SERVICE WORKER' });
 
               // Send a message to the active clients
-              self.clients.matchAll().then(function (clients) {
-                clients.forEach(function (client) {
-                  client.postMessage({
-                    data: 'Hello from the service worker!',
+              // self.clients.matchAll().then(function (clients) {
+              //   clients.forEach(function (client) {
+              //     client.postMessage({
+              //       data: 'Hello from the service worker!',
+              //     });
+              //   });
+              // });
+
+              if (resp.ok) {
+                deleteItemFromDB('offline-posts', data[i].id);
+                self.clients.matchAll().then(function (clients) {
+                  clients.forEach(function (client) {
+                    client.postMessage({
+                      data: 'successfully send DATA from Sync Event',
+                    });
                   });
                 });
-              });
-
-              deleteItemFromDB('offline-posts', data[i].id);
-              if (resp.ok) {
-                console.log('SENT DATA FROM SYNC MANAGER');
+                // console.log('Successfully send DATA from Sync');
                 // clean indexedDB
               }
             })
