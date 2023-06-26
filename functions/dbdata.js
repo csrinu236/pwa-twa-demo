@@ -62,7 +62,7 @@ exports.handler = async (ev, context) => {
     } catch (error) {
       return {
         statusCode: 500,
-        body: JSON.stringify({ message: 'something went wrong' }),
+        body: JSON.stringify({ message: 'something went wrong', error }),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -87,6 +87,7 @@ exports.handler = async (ev, context) => {
         statusCode: 500,
         body: JSON.stringify({
           message: 'Internal Server Error',
+          error,
         }),
         headers: {
           'Content-Type': 'application/json',
