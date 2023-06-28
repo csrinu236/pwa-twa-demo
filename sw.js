@@ -495,16 +495,19 @@ self.addEventListener('sync', (e) => {
       readAllData('offline-posts').then((data) => {
         for (let i = 0; i < data.length; i++) {
           // const url = 'https://pwa-practice-49ad4-default-rtdb.firebaseio.com/posts.json';
-          const url = '/api/dbdata';
+          // const url = '/api/dbdata';
+          const url = '/api/locations-db';
           fetch(url, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json; charset=utf-8',
             },
             body: JSON.stringify({
-              id: data[i].id,
+              postid: Number(data[i].id), // don't send 'id':'value',
+              // coz airtable by default generats an ID and it may clash
               city: data[i].city,
               country: data[i].country,
+              language: data[i].language,
             }),
             mode: 'no-cors',
           })

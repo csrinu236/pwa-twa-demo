@@ -4,16 +4,18 @@ const fetchBtn = document.querySelector('.fetch-btn');
 const randomBtn = document.querySelector('.random-btn');
 const city = document.querySelector('#city');
 const country = document.querySelector('#country');
+const language = document.querySelector('#language');
 
 randomBtn.addEventListener('click', generateRandomCityAndCountry);
 function generateRandomCityAndCountry() {
   const randomIndex = Math.floor(Math.random() * cities.length);
   city.value = cities[randomIndex];
   country.value = countries[randomIndex];
+  language.value = languages[randomIndex];
   submitBtn.disabled = false;
 }
 // const url = 'https://pwa-practice-49ad4-default-rtdb.firebaseio.com/posts.json';
-const url = '/api/dbdata';
+const url = '/api/locations-db';
 
 function toggleSubmitBtn() {
   if (city.value.trim() !== '' && country.value.trim() !== '') {
@@ -50,9 +52,11 @@ submitBtn.addEventListener('click', async () => {
         id: new Date().getTime(),
         city: city.value,
         country: country.value,
+        language: language.value,
       };
       city.value = '';
       country.value = '';
+      language.value = '';
       submitBtn.disabled = true;
 
       writedata('offline-posts', post)
@@ -66,12 +70,14 @@ submitBtn.addEventListener('click', async () => {
     });
   } else {
     const post = {
-      id: new Date().getTime(),
+      postId: new Date().getTime(),
       city: city.value,
       country: country.value,
+      language: language.value,
     };
     city.value = '';
     country.value = '';
+    language.value = '';
     submitBtn.disabled = true;
 
     const data = await fetch(url, {
@@ -92,9 +98,10 @@ submitBtn.addEventListener('click', async () => {
 let networkRecieved = false;
 
 fetchBtn.addEventListener('click', async () => {
-  fetchBtn.disabled = true;
-  const data = await fetch(url).then((resp) => resp.json());
-  fetchBtn.disabled = false;
+  // fetchBtn.disabled = true;
+  const url = '/api/locations-db';
+  const data = await fetch(url).then((resp) => console.log(resp));
+  // fetchBtn.disabled = false;
   networkRecieved = true;
   console.log(data);
 });

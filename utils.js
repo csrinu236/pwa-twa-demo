@@ -106,3 +106,36 @@ const countries = [
   'Poland',
   'Brazil',
 ];
+
+const languages = [
+  'English', // London
+  'French', // Paris
+  'English', // New York
+  'Japanese', // Tokyo
+  'English', // Sydney
+  'Italian', // Rome
+  'German', // Berlin
+  'Russian', // Moscow
+  'Arabic', // Dubai
+  'English', // Toronto
+  'Spanish', // Madrid
+  'Dutch', // Amsterdam
+  'Spanish', // Barcelona
+  'Chinese', // Beijing
+  'Thai', // Bangkok
+  'Arabic', // Cairo
+  'Danish', // Copenhagen
+  'Hindi', // Delhi
+  'Finnish', // Helsinki
+  'Turkish', // Istanbul
+  'Indonesian', // Jakarta
+  'Malay', // Kuala Lumpur
+  'Portuguese', // Lisbon
+  'Spanish', // Mexico City
+  'Swahili', // Nairobi
+  'Norwegian', // Oslo
+  'Korean', // Seoul
+  'Swedish', // Stockholm
+  'German', // Vienna
+  'Polish', // Warsaw
+];

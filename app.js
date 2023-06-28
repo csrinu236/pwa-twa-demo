@@ -66,7 +66,7 @@ fetchBtn.addEventListener('click', async () => {
 manualSaveBtn.addEventListener('click', () => {
   if ('caches' in window) {
     caches.open('manual-save').then((cacheObj) => {
-      //   cacheObj.add('/manifest.json');
+      cacheObj.add('/manifest.json');
     });
   }
 });
