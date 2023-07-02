@@ -11,6 +11,8 @@ const dbPromise = idb.open('posts-store', 1, (db) => {
   // id is useful to find single object in that databse
 });
 
+console.log('CHECKING===>');
+
 const writedata = (st, data) => {
   return dbPromise.then((db) => {
     const tx = db.transaction(st, 'readwrite');

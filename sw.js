@@ -1,8 +1,8 @@
 importScripts('/idb.js');
 importScripts('/utils.js');
 
-const STATIC = 'static_v4';
-const DYNAMIC = 'dynamic_v3';
+const STATIC = 'static_v1';
+const DYNAMIC = 'dynamic_v1';
 const MANUAL_SAVE = 'manual_save_v1';
 
 // const dbPromise = idb.open('posts-store', 1, (db) => {
@@ -18,28 +18,6 @@ self.addEventListener('install', (e) => {
   // don't offload this task and go to bottom first cache
   // all these pages and then go for activating service worker
 
-  caches.keys().then((keyList) => {
-    // to remove older cache if it exists..
-    if (keyList.length > 0) {
-      e.waitUntil(
-        Promise.all(
-          keyList.map((eachKey) => {
-            if (
-              eachKey !== STATIC &&
-              eachKey !== DYNAMIC &&
-              eachKey !== MANUAL_SAVE
-            ) {
-              // we will soon find a way to automatically name newer cache
-              // and deleting older cache using older cache name.
-              console.log('[Service Worker] removing older cache', { eachKey });
-              return caches.delete(eachKey);
-            }
-          })
-        )
-      );
-    }
-  });
-
   e.waitUntil(
     // caches store key value pairs or to add new cache details
     caches.open(STATIC).then((cache) => {
@@ -52,29 +30,45 @@ self.addEventListener('install', (e) => {
       cache.add('/app.js');
     })
   );
+
+  // console.log('Skiping Wating...');
+  // self.skipWaiting();
 });
 
-// self.addEventListener('activate', (e) => {
-// console.log('[Service Worker] activating Service Worker', e);
-// e.waitUntil();
-// caches.keys().then((keyList) => {
-//   return Promise.all(
-//     keyList.map((eachKey) => {
-//       if (
-//         eachKey !== STATIC &&
-//         eachKey !== DYNAMIC &&
-//         eachKey !== MANUAL_SAVE
-//       ) {
-//         // we will soon find a way to automatically name newer cache
-//         // and deleting older cache using older cache name.
-//         console.log('[Service Worker] removing older cache', { eachKey });
-//         return caches.delete(eachKey);
-//       }
-//     })
-//   );
-// })
-// return self.clients.claim();
-// });
+self.addEventListener('activate', (e) => {
+  console.log('[Service Worker] activating Service Worker', e);
+  console.log(
+    '[swReg] in activate event for checking scope of service worker',
+    self.registration
+  );
+  caches.keys().then((keyList) => {
+    return Promise.all(
+      keyList.map((eachKey) => {
+        if (
+          eachKey !== STATIC &&
+          eachKey !== DYNAMIC &&
+          eachKey !== MANUAL_SAVE
+        ) {
+          // we will soon find a way to automatically name newer cache
+          // and deleting older cache using older cache name.
+          console.log('[Service Worker] removing older cache', { eachKey });
+          return caches.delete(eachKey);
+        }
+      })
+    );
+  });
+  // When SW installed & activated for the first time, it does have any scope or
+  // clients(pages), it does not know which page fetch requests to be intercepted.
+  // You can take control of uncontrolled clients by calling clients.claim()
+  // within your service worker once it's activated.
+  return self.clients.claim();
+});
+
+self.clients.matchAll().then(function (clients) {
+  clients.forEach(function (client) {
+    console.log({ client });
+  });
+});
 
 // self.addEventListener('fetch', (e) => {
 //   //   console.log('[Service Worker] Service Worker fetching...', e);
@@ -294,13 +288,12 @@ self.addEventListener('install', (e) => {
 // INDEXDB
 
 self.addEventListener('fetch', (e) => {
-  console.log('[Service Worker] Service Worker fetching...', e);
-  console.log('Request in Intercepted, Captain...!');
+  console.log('1)[Service Worker] Request in Intercepted, Captain...!', e);
 
   const url = new URL(e.request.url);
-  if (url.pathname === '/api/dbdata') {
-    return e.respondWith(fetch(e.request));
-  }
+  // if (url.pathname === '/api/dbdata') {
+  //   return e.respondWith(fetch(e.request));
+  // }
   if (e.request.method === 'POST' && url.pathname === '/share-target.html') {
     // The URL constructor is a built-in JavaScript object that provides a convenient way to parse and manipulate URLs. By passing a URL string as a parameter to the URL constructor, you can create a URL object that exposes various properties and methods to access and modify different parts of the URL.
     // Once you have created a URL object, you can use its properties and methods to retrieve information about the URL, such as the protocol, hostname, port, path, query parameters, and more. You can also modify these components if needed.
@@ -319,6 +312,8 @@ self.addEventListener('fetch', (e) => {
         // parsedUrl.searchParams.get('url');
         // const responseUrl = await saveBookmark(link);
         const responseUrl = '/share-target.html';
+        // 303 status code is for redirecting a POST request with body
+        // into a GET request with body key-value pairs as query parameters
         return Response.redirect(responseUrl, 303);
       })()
     );
@@ -375,7 +370,7 @@ self.addEventListener('fetch', (e) => {
         if (resp) {
           // if we found the cached response, serve it.
           // if no cache found, get it from network.
-          console.log('From Cache ', resp);
+          console.log('2) From Cache ', resp);
           return resp;
         } else {
           return fetch(e.request)
@@ -383,7 +378,9 @@ self.addEventListener('fetch', (e) => {
               // before serving network response, cache it and then serve it
               return caches.open(DYNAMIC).then((cache) => {
                 cache.put(e.request.url, fetchResp.clone());
-                return fetchResp;
+                console.log('2) From Fetch ', fetchResp);
+                return fetchResp; // we can also return fetchResp.json()
+                // so that js files don't need to do resp.json()
               });
             })
             .catch((err) => {
@@ -527,6 +524,7 @@ self.addEventListener('sync', (e) => {
                 deleteItemFromDB('offline-posts', data[i].id);
                 self.clients.matchAll().then(function (clients) {
                   clients.forEach(function (client) {
+                    console.log({ client });
                     client.postMessage({
                       data: 'successfully send DATA from Sync Event',
                     });

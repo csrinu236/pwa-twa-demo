@@ -1,14 +1,36 @@
-console.warn('Waning something...');
-
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker
-    .register('/sw.js')
-    .then((registration) => {
-      console.log('Service Worker registered:', registration);
-    })
-    .catch((error) => {
-      console.log('Service Worker registration failed:', error);
-    });
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/sw.js', {
+        updateViaCache: 'none',
+      })
+      .then((registration) => {
+        console.log('Service Worker registered:', registration);
+        registration.installing; // the installing worker, or undefined
+        registration.waiting; // the waiting worker, or undefined
+        registration.active; // the active worker, or undefined
+
+        registration.addEventListener('updatefound', () => {
+          // A New service worker has appeared in registration.installing!
+          const newWorker = registration.installing;
+
+          newWorker.state;
+          // "installing" - the install event has fired, but not yet complete
+          // "installed"  - install complete
+          // "activating" - the activate event has fired, but not yet complete
+          // "activated"  - fully active
+          // "redundant"  - discarded. Either failed install, or it's been
+          //                replaced by a newer version
+
+          newWorker.addEventListener('statechange', () => {
+            // newWorker.state has changed
+          });
+        });
+      })
+      .catch((error) => {
+        console.log('Service Worker registration failed:', error);
+      });
+  });
 }
 
 const installBtn = document.querySelector('.install-btn');
