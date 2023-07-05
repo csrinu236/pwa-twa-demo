@@ -1,6 +1,7 @@
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
+      // we can also place a CDN link for service worker script file
       .register('/sw.js', {
         updateViaCache: 'none',
       })
@@ -329,3 +330,46 @@ function createModal(message) {
   document.body.appendChild(MODAL);
   setTimeout(() => MODAL.remove(), 1500);
 }
+
+const bluetoothBtn = document.querySelector('.bluetooth-btn');
+bluetoothBtn.addEventListener('click', (e) => {
+  navigator.bluetooth
+    .requestDevice({ filters: [{ services: ['battery_service'] }] })
+    .then((device) => device.gatt.connect())
+    .then((server) => {
+      // Getting Battery Service…
+      return server.getPrimaryService('battery_service');
+    })
+    .then((service) => {
+      // Getting Battery Level Characteristic…
+      return service.getCharacteristic('battery_level');
+    })
+    .then((characteristic) => {
+      // Reading Battery Level…
+      return characteristic.readValue();
+    })
+    .then((value) => {
+      console.log(`Battery percentage is ${value.getUint8(0)}`);
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+  // navigator.bluetooth
+  //   .requestDevice({
+  //     acceptAllDevices: true,
+  //   })
+  //   .then((device) => {
+  //     // console.log(device);
+  //     return device.gatt.connect();
+  //   })
+  //   .then((result) => console.log(result))
+  //   .catch((error) => {
+  //     console.error(error);
+  //   });
+});
+
+fetch('/logo.jpg')
+  .then((resp) => resp.blob())
+  .then((imgBlob) => {
+    console.log(imgBlob);
+  });
