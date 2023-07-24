@@ -100,7 +100,7 @@ let networkRecieved = false;
 fetchBtn.addEventListener('click', async () => {
   // fetchBtn.disabled = true;
   const url = '/api/locations-db';
-  const data = await fetch(url).then((resp) => console.log(resp));
+  const data = await fetch(url).then((resp) => resp.json());
   // fetchBtn.disabled = false;
   networkRecieved = true;
   console.log(data);
@@ -110,6 +110,7 @@ if ('indexedDB' in window) {
   readAllData('posts').then((data) => {
     if (!networkRecieved) {
       console.log(data);
+      networkRecieved = false;
     }
   });
 }

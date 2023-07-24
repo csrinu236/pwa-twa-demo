@@ -354,18 +354,6 @@ bluetoothBtn.addEventListener('click', (e) => {
     .catch((error) => {
       console.error(error);
     });
-  // navigator.bluetooth
-  //   .requestDevice({
-  //     acceptAllDevices: true,
-  //   })
-  //   .then((device) => {
-  //     // console.log(device);
-  //     return device.gatt.connect();
-  //   })
-  //   .then((result) => console.log(result))
-  //   .catch((error) => {
-  //     console.error(error);
-  //   });
 });
 
 fetch('/logo.jpg')

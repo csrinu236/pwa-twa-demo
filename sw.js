@@ -5,13 +5,7 @@ const STATIC = 'static_v1';
 const DYNAMIC = 'dynamic_v1';
 const MANUAL_SAVE = 'manual_save_v1';
 
-// const dbPromise = idb.open('posts-store', 1, (db) => {
-//   // db we, got access to database object here
-//   if (!db.objectStoreNames.contains('posts')) {
-//     db.createObjectStore('posts', { keyPath: 'id' });
-//   }
-//   // id is useful to find single object in that databse
-// });
+const ONLY_FETCH = ['http://localhost:8888/logo.jpg'];
 
 self.addEventListener('install', (e) => {
   console.log('[Service Worker] installing Service Worker...', e);
@@ -70,223 +64,6 @@ self.clients.matchAll().then(function (clients) {
   });
 });
 
-// self.addEventListener('fetch', (e) => {
-//   //   console.log('[Service Worker] Service Worker fetching...', e);
-//   //   return e.respondWith(fetch(e.request));
-//   //   e.request is acting like a key
-
-//   e.respondWith(
-//     caches.match(e.request).then((resp) => {
-//       if (resp) {
-//         // if we found the cached response, serve it.
-//         // if no cache found, get it from network.
-//         return resp;
-//       } else {
-//         return fetch(e.request)
-//           .then((fetchResp) => {
-//             // before serving network response, cache it and then serve it
-//             return caches.open('dynamic-v2').then((cache) => {
-//               cache.put(e.request.url, fetchResp.clone());
-//               return fetchResp;
-//             });
-//           })
-//           .catch((err) => {
-//             // Here we should navigate user to offline.html page
-//             // We need to navigate the user to the fallback.html page when
-//             // the user is offline AND trying to access any html
-//             // page which has NOT been cached yet (about.html)
-
-//             return caches.open('static').then((cache) => {
-//               // it will return offline.html file if the match found for about.html page
-
-//               return cache.match('/offline.html');
-// it can also lead to another problem, if any http request fails
-// we will get html page instead of json. So we should send cached
-// response based on url route.
-// Solution:
-// if (e.request.url.indexOf('/about.html')) {
-//   return cache.match('/offline.html');
-// }
-
-// Above is only for about.html, what about remaining uncached html files ?
-// Better Solution:
-// if (e.request.headers.get('accept').includes('text/html')) {
-// Here you can also add fallback images for image requests
-//   return cache.match('/offline.html');
-// }
-//             });
-//           });
-//       }
-//     })
-//   );
-// });
-
-// Cache only strategy, Here when we are in index.html page and click on about.html
-// it won't work because we are completely blocking network requests and serving
-// only cached files if found. We should tweek it so that for some routes, network
-// responses should come and for some routes caches should be served
-// based on url route.
-
-// self.addEventListener('fetch', (e) => {
-//   console.log('[Service Worker] Service Worker fetching...', e);
-//   return e.respondWith(fetch(e.request));
-//   // e.request is acting like a key
-//   e.respondWith(caches.match(e.request));
-// });
-
-// Network only strategy, here nothing works if there no internet connection
-// coz, there is no cache we are serving only network responses.
-
-// self.addEventListener('fetch', (e) => {
-//   console.log('[Service Worker] Service Worker fetching...', e);
-//   // e.request is acting like a key
-//   return e.respondWith(fetch(e.request));
-// });
-
-// Network first and then cache later (if network fails)
-// If there is any network response which frequently changes like criccbuzz,
-// scorecard, relying on cache is dangerous.
-// This works fine when there is no internet, this also has a drawback,
-// if there is any network request that takes 60 seconds and only fails after 60 seconds
-// due to request time out error, user will see blank page for 60 seconds, only then
-// cached response(control goes to catch block).
-
-// self.addEventListener('fetch', (e) => {
-//   console.log('[Service Worker] Service Worker fetching...', e);
-//   // e.request is acting like a key
-//   return e
-//     .respondWith(fetch(e.request))
-//     .then((fetchResp) => {
-//       return caches.open('dynamic').then((cache) => {
-//         cache.put(e.request.url, fetchResp.clone());
-//         return fetchResp;
-//       });
-//     })
-//     .catch((err) => {
-//       return caches.match(e.request).then((cache) => {
-//         if (cache) {
-//           return cache;
-//         }
-//       });
-//     });
-// });
-
-// Cache first and network later(we have seen this first) with an IMPROVEMENT
-// We serve cache files for few milliseconds/seconds until network is yet
-// to serve it's latest updated response. One network response is available
-// we serve it.
-// It makes sure that user always see quick cached response & updated data once
-// network is available.
-
-// Here we don't do things in sw.js. App.js is enough
-
-// app.js
-// const url = 'https://jsonplaceholder.typicode.com/posts';
-// let fetchRespFound = false;
-
-// fetch(url) // offloading it to browser, control instantly goes to
-//   .then((resp) => {
-//     return resp.json();
-//   })
-//   .then((data) => {
-//     console.log('From web..', { data });
-//     fetchRespFound = true;
-//     // We already mentioned we should not cache json data
-//     // Solution: Simply sniff fetch event and cache there like we already seen.
-//     // update UI with data
-//   });
-
-// if ('caches' in window) {
-//   caches
-//     .match(url)
-//     .then((cacheResp) => {
-//       if (cacheResp) {
-//         return cacheResp.json();
-//       }
-//     })
-//     .then((data) => {
-//       console.log('From cache..', { data });
-//       // Fetch response is always updated and if net speed very high and if
-//       // network response is fatser than cache response, we should update UI
-//       // with network response only
-//       if (!fetchRespFound) {
-//         // Update UI
-//       }
-//     });
-// }
-
-// sw.js
-// self.addEventListener('fetch', (e) => {
-//   console.log('[Service Worker] Service Worker fetching...', e);
-//   // e.request is acting like a key
-//   // return e.respondWith(
-//   //   caches.open('dynamic').then((cache) => {
-//   //     return fetch(e.request).then((fetchResp) => {
-//   //       cache.put(e.request.url, fetchResp.clone());
-//   //       return fetchResp;
-//   //     });
-//   //   })
-//   // );
-//   // But this will block showing cached pages when there is no internet.
-//   // Solution, we should go with this only for some urls
-//   const url =
-//     'https://pwa-practice-49ad4-default-rtdb.firebaseio.com/posts.json';
-//   if (e.request.url.indexOfurl > -1) {
-//     // this case cache first & then network later
-//     return e.respondWith(
-//       caches.open('dynamic').then((cache) => {
-//         return fetch(e.request).then((fetchResp) => {
-//           cache.put(e.request.url, fetchResp.clone());
-//           return fetchResp;
-//         });
-//       })
-//     );
-
-//     // CHECK THE NETWORK TAB AND SEE REMAINING FILES
-//     // ARE SERVED FROM SW, BUT NOT THIS URL.
-//   } else {
-//     // previous as usual case either cache or network
-//     e.respondWith(
-//       caches.match(e.request).then((resp) => {
-//         if (resp) {
-//           // if we found the cached response, serve it.
-//           // if no cache found, get it from network.
-//           return resp;
-//         } else {
-//           return fetch(e.request)
-//             .then((fetchResp) => {
-//               // before serving network response, cache it and then serve it
-//               return caches.open('dynamic-v2').then((cache) => {
-//                 cache.put(e.request.url, fetchResp.clone());
-//                 return fetchResp;
-//               });
-//             })
-//             .catch((err) => {
-//               // Here we should navigate user to offline.html page
-//               // We need to navigate the user to the fallback.html page when
-//               // the user is offline AND trying to access any html
-//               // page which has NOT been cached yet (about.html)
-
-//               return caches.open('static').then((cache) => {
-//                 // it will return offline.html file if the match found for about.html page
-//                 // return cache.match('/offline.html');
-//                 // it can also lead to another problem, if any http request fails
-//                 // we will get html page instead of json. So we should send cached
-//                 // response based on url route.
-//                 if (e.request.headers.get('accept').includes('text/html')) {
-//                   // Here you can also add fallback images for image requests
-//                   return cache.match('/offline.html');
-//                 }
-//               });
-//             });
-//         }
-//       })
-//     );
-//   }
-// });
-
-// INDEXDB
-
 self.addEventListener('fetch', (e) => {
   console.log('1)[Service Worker] Request in Intercepted, Captain...!', e);
 
@@ -318,22 +95,13 @@ self.addEventListener('fetch', (e) => {
       })()
     );
   }
-  // e.request is acting like a key
-  // return e.respondWith(
-  //   caches.open('dynamic').then((cache) => {
-  //     return fetch(e.request).then((fetchResp) => {
-  //       cache.put(e.request.url, fetchResp.clone());
-  //       return fetchResp;
-  //     });
-  //   })
-  // );
-  // But this will block showing cached pages when there is no internet.
-  // Solution, we should go with this only for some urls
-  const urls = [
-    'https://pwa-practice-49ad4-default-rtdb.firebaseio.com/posts.json',
-  ];
 
-  // console.log(e.request.url);
+  console.log('request===>', e.request.url);
+  if (ONLY_FETCH.includes(e.request.url)) {
+    return e.respondWith(fetch(e.request));
+  }
+
+  const urls = ['http://localhost:8888/api/locations-db'];
 
   if (urls.includes(e.request.url)) {
     // this case cache first & then network later

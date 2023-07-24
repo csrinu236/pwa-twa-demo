@@ -14,43 +14,60 @@ const MANUAL_SAVE = 'manual_save_v1';
 // });
 
 self.addEventListener('install', (e) => {
-  console.log('[Service Worker] installing Service Worker', e);
+  console.log('[Service Worker] installing Service Worker...', e);
   // don't offload this task and go to bottom first cache
   // all these pages and then go for activating service worker
+
   e.waitUntil(
-    // caches store key value pairs
+    // caches store key value pairs or to add new cache details
     caches.open(STATIC).then((cache) => {
       console.log('[Service Worker] Pre caching app shell');
       cache.add('/index.html');
+      cache.add('/about.html');
       cache.add('/idb.js');
       cache.add('/offline.html');
       cache.add('/main.css');
       cache.add('/app.js');
     })
   );
+
+  // console.log('Skiping Wating...');
+  // self.skipWaiting();
 });
 
 self.addEventListener('activate', (e) => {
   console.log('[Service Worker] activating Service Worker', e);
-  e.waitUntil(
-    caches.keys().then((keyList) => {
-      return Promise.all(
-        keyList.map((eachKey) => {
-          if (
-            eachKey !== STATIC &&
-            eachKey !== DYNAMIC &&
-            eachKey !== MANUAL_SAVE
-          ) {
-            // we will soon find a way to automatically name newer cache
-            // and deleting older cache using older cache name.
-            console.log('[Service Worker] removing older cache', { eachKey });
-            return caches.delete(eachKey);
-          }
-        })
-      );
-    })
+  console.log(
+    '[swReg] in activate event for checking scope of service worker',
+    self.registration
   );
+  caches.keys().then((keyList) => {
+    return Promise.all(
+      keyList.map((eachKey) => {
+        if (
+          eachKey !== STATIC &&
+          eachKey !== DYNAMIC &&
+          eachKey !== MANUAL_SAVE
+        ) {
+          // we will soon find a way to automatically name newer cache
+          // and deleting older cache using older cache name.
+          console.log('[Service Worker] removing older cache', { eachKey });
+          return caches.delete(eachKey);
+        }
+      })
+    );
+  });
+  // When SW installed & activated for the first time, it does have any scope or
+  // clients(pages), it does not know which page fetch requests to be intercepted.
+  // You can take control of uncontrolled clients by calling clients.claim()
+  // within your service worker once it's activated.
   return self.clients.claim();
+});
+
+self.clients.matchAll().then(function (clients) {
+  clients.forEach(function (client) {
+    console.log({ client });
+  });
 });
 
 // self.addEventListener('fetch', (e) => {
@@ -271,14 +288,19 @@ self.addEventListener('activate', (e) => {
 // INDEXDB
 
 self.addEventListener('fetch', (e) => {
-  console.log('[Service Worker] Service Worker fetching...', e);
-  console.log('Request in Intercepted, Captain...!');
+  console.log('1)[Service Worker] Request in Intercepted, Captain...!', e);
 
   const url = new URL(e.request.url);
-  console.log({ url, pathname: url.pathname });
-  // If this is an incoming POST request for the
-  // registered "action" URL, respond to it.
+  // if (url.pathname === '/api/dbdata') {
+  //   return e.respondWith(fetch(e.request));
+  // }
   if (e.request.method === 'POST' && url.pathname === '/share-target.html') {
+    // The URL constructor is a built-in JavaScript object that provides a convenient way to parse and manipulate URLs. By passing a URL string as a parameter to the URL constructor, you can create a URL object that exposes various properties and methods to access and modify different parts of the URL.
+    // Once you have created a URL object, you can use its properties and methods to retrieve information about the URL, such as the protocol, hostname, port, path, query parameters, and more. You can also modify these components if needed.
+
+    // console.log({ url, pathname: url.pathname });
+    // If this is an incoming POST request for the
+    // registered "action" URL, respond to it.
     e.respondWith(
       (async () => {
         const formData = await e.request.formData();
@@ -290,6 +312,8 @@ self.addEventListener('fetch', (e) => {
         // parsedUrl.searchParams.get('url');
         // const responseUrl = await saveBookmark(link);
         const responseUrl = '/share-target.html';
+        // 303 status code is for redirecting a POST request with body
+        // into a GET request with body key-value pairs as query parameters
         return Response.redirect(responseUrl, 303);
       })()
     );
@@ -309,10 +333,11 @@ self.addEventListener('fetch', (e) => {
     'https://pwa-practice-49ad4-default-rtdb.firebaseio.com/posts.json',
   ];
 
-  console.log(e.request.url);
+  // console.log(e.request.url);
 
   if (urls.includes(e.request.url)) {
     // this case cache first & then network later
+    // Part2, fetch interceptor of Part 1(post.js)
     return e.respondWith(
       fetch(e.request).then((resp) => {
         const clonedResp = resp.clone();
@@ -345,7 +370,7 @@ self.addEventListener('fetch', (e) => {
         if (resp) {
           // if we found the cached response, serve it.
           // if no cache found, get it from network.
-          console.log('From Cache ', resp);
+          console.log('2) From Cache ', resp);
           return resp;
         } else {
           return fetch(e.request)
@@ -353,7 +378,9 @@ self.addEventListener('fetch', (e) => {
               // before serving network response, cache it and then serve it
               return caches.open(DYNAMIC).then((cache) => {
                 cache.put(e.request.url, fetchResp.clone());
-                return fetchResp;
+                console.log('2) From Fetch ', fetchResp);
+                return fetchResp; // we can also return fetchResp.json()
+                // so that js files don't need to do resp.json()
               });
             })
             .catch((err) => {
@@ -362,6 +389,7 @@ self.addEventListener('fetch', (e) => {
               // the user is offline AND trying to access any html
               // page which has NOT been cached yet (about.html)
 
+              // way-1 (recommended)
               return caches.open(STATIC).then((cache) => {
                 // it will return offline.html file if the match found for about.html page
                 // return cache.match('/offline.html');
@@ -376,6 +404,14 @@ self.addEventListener('fetch', (e) => {
                   // we can also send this without opening static caches files
                 }
               });
+              // way-2
+              // now it will search all the available caches(STATIC, DYNAMIC, MANUAL_SAVE)
+              // instead of only STATIC
+              if (e.request.headers.get('accept').includes('text/html')) {
+                return caches.match('/offline.html').then((cacheFound) => {
+                  return cacheFound;
+                });
+              }
             });
         }
       })
@@ -414,7 +450,9 @@ self.addEventListener('notificationclick', (e) => {
         );
         if (openedClient) {
           // if window found open it and focus it
-          openedClient.navigate('http://localhost:8080');
+          openedClient.navigate(
+            'https://pwa-practice-123.netlify.app/files.html'
+          );
           // actually we are hard coding this local host url,
           // lets say we have a blog post notification, we should
           // open that page directly, we should send this url
@@ -426,7 +464,9 @@ self.addEventListener('notificationclick', (e) => {
           openedClient.focus();
         } else {
           // if not found
-          openedClient.openWindow('http://localhost:8080');
+          openedClient.openWindow(
+            'https://pwa-practice-123.netlify.app/files.html'
+          );
           // openedClient.navigate(notification.data.url);
         }
       })
@@ -447,37 +487,54 @@ self.addEventListener('notificationclose', (e) => {
 
 self.addEventListener('sync', (e) => {
   if (e.tag === 'sync-new-posts') {
-    console.log('[SYNCING NEW POST]');
+    console.log('[SYNC event CB into the action...]');
     e.waitUntil(
       readAllData('offline-posts').then((data) => {
-        console.log('SYNC MANAGER...', data);
         for (let i = 0; i < data.length; i++) {
-          console.log('ID ID ID ID: ', data[i].id);
-          // const url =
-          //   'https://pwa-practice-49ad4-default-rtdb.firebaseio.com/posts.json';
-          const url = 'http://localhost:3000/posts';
+          // const url = 'https://pwa-practice-49ad4-default-rtdb.firebaseio.com/posts.json';
+          // const url = '/api/dbdata';
+          const url = '/api/locations-db';
           fetch(url, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json; charset=utf-8',
             },
             body: JSON.stringify({
-              id: data[i].id,
+              postid: Number(data[i].id), // don't send 'id':'value',
+              // coz airtable by default generats an ID and it may clash
               city: data[i].city,
               country: data[i].country,
+              language: data[i].language,
             }),
             mode: 'no-cors',
           })
             .then((resp) => {
-              console.log(resp);
-              deleteItemFromDB('offline-posts', data[i].id);
+              // self.postMessage({ data: 'POST MESSAGE FROM SERVICE WORKER' });
+
+              // Send a message to the active clients
+              // self.clients.matchAll().then(function (clients) {
+              //   clients.forEach(function (client) {
+              //     client.postMessage({
+              //       data: 'Hello from the service worker!',
+              //     });
+              //   });
+              // });
 
               if (resp.ok) {
-                console.log('SENT DATA FROM SYNC MANAGER');
+                deleteItemFromDB('offline-posts', data[i].id);
+                self.clients.matchAll().then(function (clients) {
+                  clients.forEach(function (client) {
+                    console.log({ client });
+                    client.postMessage({
+                      data: 'successfully send DATA from Sync Event',
+                    });
+                  });
+                });
+                // console.log('Successfully send DATA from Sync');
                 // clean indexedDB
               }
             })
-            .catch((err) => console.log('Error...', err));
+            .catch((err) => console.error('Error...', err));
         }
       })
     );
@@ -542,149 +599,3 @@ self.addEventListener('push', (e) => {
 //     })
 //   );
 // });
-
-self.addEventListener('fetch', (e) => {
-  if ('caches' in window) {
-    // way-1(recommended for easier understanding...)
-    e.respondWith(
-      caches.match(e.request).then((cacheFound) => {
-        return cacheFound;
-      })
-    );
-    // way-2, directly returning Promise
-    e.respondWith(caches.match(e.request));
-  }
-});
-
-self.addEventListener('fetch', (e) => {
-  // way-1
-  e.respondWith(
-    fetch(e.request).then((resp) => {
-      return resp;
-    })
-  );
-  // way-2
-  e.respondWith(fetch(e.request));
-});
-
-self.addEventListener('fetch', (e) => {
-  // way-1
-  e.respondWith(
-    fetch(e.request)
-      .then((resp) => {
-        return resp;
-      })
-      .catch((err) => {
-        caches.match(e.request).then((cacheFound) => {
-          return cacheFound;
-        });
-      })
-  );
-  // way-2;
-  e.respondWith(
-    fetch(e.request).catch((err) => {
-      caches.match(e.request).then((cacheFound) => {
-        return cacheFound;
-      });
-    })
-  );
-  // way-3;
-  e.respondWith(fetch(e.request).catch(caches.match(e.request)));
-});
-
-// app.js
-// Whenever there are fetch responses which change too often, we serve instant cached
-// response and then actual fetch response.
-const url = 'somethig';
-let fetchReceived = false;
-fetch(url)
-  .then((resp) => resp.json())
-  .then((data) => {
-    // update UI with the date
-    fetchReceived = true;
-    updateUI(data);
-    console.log(data);
-    // Q) Where do you cache this response?
-    // You can't cache this reponse HERE, you can only
-    // cache response in fetch interceptor => self.addEventListener('fetch', ()=>{})
-  });
-
-const FREQUENTLY_CHANGING_CACHE = 'frequently_changing_cache_v1';
-if ('caches' in window) {
-  caches
-    .match(url)
-    .then((cacheFound) => {
-      if (fetchReceived === false) {
-        updateUI(cacheFound); // wrong, coz it is NOT YET json response
-      }
-      return cacheFound.json(); // we need to return JSON response to next then block
-    })
-    .then((actualData) => {
-      if (fetchReceived === false) {
-        updateUI(actualData); // correct
-      }
-      updateUI(actualData);
-    });
-}
-
-// sw.js
-self.addEventListener('fetch', (e) => {
-  e.respondWith(
-    fetch(e.request).then((resp) => {
-      return caches.open(FREQUENTLY_CHANGING_CACHE).then((caches) => {
-        caches.put(e.request.url, resp.clone());
-        return resp;
-      });
-    })
-  );
-});
-
-// sw.js
-const FREQList = ['url1', 'url2', 'url3'];
-
-self.addEventListener('fetch', (e) => {
-  if (FREQList.includes(e.request.url)) {
-    e.respondWith(
-      fetch(e.request).then((resp) => {
-        return caches.open(FREQUENTLY_CHANGING_CACHE).then((caches) => {
-          caches.put(e.request.url, resp.clone());
-          return resp;
-        });
-      })
-    );
-  } else {
-    e.respondWith(
-      // we are not opening any cache so we are open to serve
-      // either from static cache or dynamic cache
-      caches.match(e.request).then((cacheFound) => {
-        if (cacheFound) {
-          return cacheFound;
-        } else {
-          return fetch(url)
-            .then((resp) => {
-              return caches.open(DYNAMIC).then((dynamicCache) => {
-                dynamicCache.put(e.request.url, resp.clone());
-                return resp;
-              });
-            })
-            .catch((err) => {
-              caches.open(STATIC).then((staticCache) => {
-                console.log(err);
-                // serve offline.html file
-                if (e.request.headers.get('accept').includes('text/html')) {
-                  // Here you can also add fallback images(like avatar/dummy image) for image requests,
-                  // but make sure you pre-cache such files
-                  return staticCache
-                    .match('/offline.html')
-                    .then((cacheFound) => {
-                      return cacheFound;
-                    });
-                  // we can also send this without opening static caches files
-                }
-              });
-            });
-        }
-      })
-    );
-  }
-});
